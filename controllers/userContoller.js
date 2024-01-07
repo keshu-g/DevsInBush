@@ -19,10 +19,6 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return messageHandler(message.INVALID_STATE, "Id", null, res);
-    }
-
     const user = await UserModel.findById(req.params.id);
 
     if (!user) {
@@ -60,13 +56,15 @@ const create = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    const userId = req.params.id; 
+    const userId = req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return messageHandler(message.INVALID_STATE, "Id", null, res);
     }
 
-    const updatedUser = await UserModel.findOneAndUpdate(userId, req.body, { new: true });
+    req.body.password = await bcrypt.hash(req.body.password, keys.BCRYPT_SALT_ROUNDS);
+
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, req.body, { new: true });
 
     if (!updatedUser) {
       return messageHandler(message.UPDATE_ERROR, "User", null, res);
@@ -79,10 +77,27 @@ const update = async (req, res) => {
   }
 };
 
+const deletee = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const deletedUser = await UserModel.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return messageHandler(message.NOT_FOUND, "User", null, res);
+    }
+    return messageHandler(message.DELETE_SUCCESS, "User", deletedUser, res);
+    
+
+  } catch (error) {
+    return messageHandler(message.SERVER_ERROR, null, error.message, res);
+  }
+};
 
 module.exports = {
   getAll,
   getById,
   create,
   update,
+  deletee,
 };
