@@ -7,7 +7,7 @@ const userRoutes = require('./routes/userRoutes');
 // const commentRoutes = require('./routes/commentRoutes');
 const app = express();
 app.use(express.json());
-express.urlencoded({ extended: true })
+express.urlencoded({ extended: true }) 
 
 // Use the routes
 app.use('/user', userRoutes);
