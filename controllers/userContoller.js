@@ -5,8 +5,6 @@ const { message } = require('../config/message');
 const keys = require('../config/keys');
 const { UserModel } = require('../models/User');
 
-
-
 const getAll = async (req, res) => {
   try {
     const users = await UserModel.find({});
@@ -35,7 +33,7 @@ const getById = async (req, res) => {
 const create = async (req, res) => {
   try {
 
-    const { username, email, password, profile_picture, contact_links } = req.body;
+    const { username, email, password, profile_picture, bio } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, keys.BCRYPT_SALT_ROUNDS);
 
@@ -44,7 +42,7 @@ const create = async (req, res) => {
       email,
       password: hashedPassword,
       profile_picture,
-      contact_links,
+      bio,
     });
 
     return messageHandler(message.CREATE_SUCCESS, "User", newUser, res)
@@ -87,7 +85,6 @@ const deletee = async (req, res) => {
       return messageHandler(message.NOT_FOUND, "User", null, res);
     }
     return messageHandler(message.DELETE_SUCCESS, "User", deletedUser, res);
-    
 
   } catch (error) {
     return messageHandler(message.SERVER_ERROR, null, error.message, res);
