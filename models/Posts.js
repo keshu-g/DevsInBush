@@ -4,6 +4,7 @@ const PostSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
+        ref : 'Users',
     },
     title: {
         type: String,
@@ -17,6 +18,7 @@ const PostSchema = new mongoose.Schema({
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
+            ref : 'Users',
         }
     }],
     contact_status: {
@@ -39,6 +41,6 @@ const PostSchema = new mongoose.Schema({
     }
 );
 
-const PostModel = mongoose.model('post', PostSchema);
+const PostModel = mongoose.model('Posts', PostSchema);
 
 module.exports = { PostModel };

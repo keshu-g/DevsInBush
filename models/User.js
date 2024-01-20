@@ -8,21 +8,20 @@ const UserSchema = new mongoose.Schema(
             required: true,
             unique: true,
         },
-        profile_picture: {
-            type: String
+        password: {
+            type: String,
+            required: true 
         },
         email: {
             type: String,
             required: true,
             unique: true,
         },
-        password: {
-            type: String,
-            required: true 
+        profile_picture: {
+            type: String
         },
-        contact_links: {
-            type: Map,
-            of: String,
+        bio: {
+            type: String,
         },
         role: {
             type: Number,
@@ -38,6 +37,6 @@ const UserSchema = new mongoose.Schema(
     }
 );
 
-const UserModel = mongoose.model('users', UserSchema);
+const UserModel = mongoose.model('Users', UserSchema);
 
 module.exports = { UserModel };

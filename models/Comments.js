@@ -5,6 +5,7 @@ const CommentSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
+        ref : "Users"
     },
     postId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -14,6 +15,7 @@ const CommentSchema = new mongoose.Schema({
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
+            ref : 'Users',
         }
     }],
     body: {
@@ -34,6 +36,6 @@ const CommentSchema = new mongoose.Schema({
     timestamps: true, 
   });
 
-const CommentModel = mongoose.model('Comment', CommentSchema);
+const CommentModel = mongoose.model('Comments', CommentSchema);
 
 module.exports = { CommentModel };

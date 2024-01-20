@@ -1,11 +1,11 @@
 const { body, param } = require('express-validator');
 const { UserModel } = require('../models/User');
-
-
+const cloudinary = require('../config/media');
+const fs = require('fs');
 const createUserValidation = [
   param('id')
     .optional({ nullable: true })
-    .isMongoId().withMessage("Id is not valid"), 
+    .isMongoId().withMessage("Id is not valid"),
 
   body('username')
     .notEmpty().withMessage('Username is required')
@@ -14,18 +14,14 @@ const createUserValidation = [
     .custom(async (value, { req }) => {
       // If the id parameter exists, this means we're updating a user
       if (req.params.id) {
-        const existingUser = await UserModel.findOne({ username: value });
-        
-        // If the username is taken and it's not the current user
-        if (existingUser && existingUser._id.toString() !== req.params.id) {
-          console.log(existingUser._id,req.params.id )
+        if ((await UserModel.findOne({ username: value, _id: { $ne: req.params.id } }))) {
           throw new Error('Username is already in use');
         }
       } else {
         // If the id parameter doesn't exist, this means we're creating a new user
         // In this case, the username must be unique
         const existingUser = await UserModel.findOne({ username: value });
-        
+
         if (existingUser) {
           throw new Error('Username is already in use');
         }
@@ -38,22 +34,19 @@ const createUserValidation = [
     .custom(async (value, { req }) => {
       // If the id parameter exists, this means we're updating a user
       if (req.params.id) {
-        const existingUser = await UserModel.findOne({ email: value });
-        
-        // If the email is taken and it's not the current user
-        if (existingUser && existingUser._id.toString() !== req.params.id) {
-          throw new Error('Email is already in use');
+        if ((await UserModel.findOne({ email: value, _id: { $ne: req.params.id } }))) {
+          throw new Error('Username is already in use');
         }
       } else {
         // If the id parameter doesn't exist, this means we're creating a new user
         // In this case, the email must be unique
         const existingUser = await UserModel.findOne({ email: value });
-        
+
         if (existingUser) {
           throw new Error('Email is already in use');
         }
       }
-     }),
+    }),
 
   body('password')
     .notEmpty().withMessage('Password is required')
@@ -61,12 +54,29 @@ const createUserValidation = [
 
   body('profile_picture')
     .optional({ nullable: true })
-    .isURL().withMessage('Profile picture must be a valid URL'),
+    .custom(async (value, { req }) => {
+      const urlRegex = /^(ftp|http|https):\/\/[^ "]+$/;
+      if (value && !urlRegex.test(value)) {
+        throw new Error('Profile picture must be a valid URL');
+      }
+      return true;
+    })
+    .customSanitizer(async (value, { req }) => {
+      if (!value) {
+        const filePath = "./config/defaultAvatars.json";
+        const jsonData = fs.readFileSync(filePath, 'utf8');
+        const resources = JSON.parse(jsonData);
+        const randomIndex = Math.floor(Math.random() * resources.length);
+        const randomImage = resources[randomIndex];
+        const randomImageUrl = randomImage.secure_url;
+        return randomImageUrl;
+      }
+      return value;
+    }),
 
-  body('contact_links.*')
+  body('bio')
     .optional({ nullable: true })
-    .isURL().withMessage('Contact links must be valid URLs'),
-
+    .isString().withMessage('Bio must be a string'),
 ];
 
 module.exports = {
