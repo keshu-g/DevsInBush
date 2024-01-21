@@ -5,12 +5,17 @@ const fs = require('fs');
 const createUserValidation = [
   param('id')
     .optional({ nullable: true })
-    .isMongoId().withMessage("Id is not valid"),
-
+    .isMongoId().withMessage("Id is not valid")
+    .bail({ level: 'request' })
+    .custom(async (value, { req }) => {
+      if (!(await UserModel.findById(value))) {
+        throw new Error('User not found');
+      }
+    }),
   body('username')
-    .notEmpty().withMessage('Username is required')
-    .isLength({ min: 3 }).withMessage('Username must be at least 3 characters')
-    .isAlphanumeric().withMessage('Username can only contain letters and numbers')
+    .notEmpty().withMessage('Username is required').bail()
+    .isLength({ min: 3 }).withMessage('Username must be at least 3 characters').bail()
+    .isAlphanumeric().withMessage('Username can only contain letters and numbers').bail()
     .custom(async (value, { req }) => {
       // If the id parameter exists, this means we're updating a user
       if (req.params.id) {
@@ -29,8 +34,8 @@ const createUserValidation = [
     }),
 
   body('email')
-    .notEmpty().withMessage('Email is required')
-    .isEmail().withMessage('Invalid email address')
+    .notEmpty().withMessage('Email is required').bail()
+    .isEmail().withMessage('Invalid email address').bail()
     .custom(async (value, { req }) => {
       // If the id parameter exists, this means we're updating a user
       if (req.params.id) {
@@ -49,7 +54,7 @@ const createUserValidation = [
     }),
 
   body('password')
-    .notEmpty().withMessage('Password is required')
+    .notEmpty().withMessage('Password is required').bail()
     .isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
 
   body('profile_picture')

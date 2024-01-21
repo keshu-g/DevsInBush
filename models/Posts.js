@@ -4,7 +4,7 @@ const PostSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref : 'Users',
+        ref: 'Users',
     },
     title: {
         type: String,
@@ -15,29 +15,16 @@ const PostSchema = new mongoose.Schema({
         required: true
     },
     likes: [{
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref : 'Users',
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Users',
     }],
-    contact_status: {
-        type: Boolean,
-        required: true
-    },
     status: {
         type: Boolean,
-        required: true
+        default: true
     },
-    created_at: {
-        type: Date
-    },
-    updated_at: {
-        type: Date
-    }
 },
     {
-        timestamps: true, 
+        timestamps: true,
     }
 );
 
