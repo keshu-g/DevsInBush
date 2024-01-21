@@ -28,7 +28,7 @@ const getById = async (req, res) => {
   } catch (error) {
     return messageHandler(message.SERVER_ERROR, null, error.message, res)
   }
-}
+};
 
 const create = async (req, res) => {
   try {
@@ -50,19 +50,17 @@ const create = async (req, res) => {
   } catch (error) {
     return messageHandler(message.SERVER_ERROR, null, error.message, res)
   }
-}
+};
 
 const update = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return messageHandler(message.INVALID_STATE, "Id", null, res);
-    }
-
     req.body.password = await bcrypt.hash(req.body.password, keys.BCRYPT_SALT_ROUNDS);
 
-    const updatedUser = await UserModel.findByIdAndUpdate(userId, req.body, { new: true });
+    const {username, password, email, bio, profile_picture} = req.body;
+
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, {username, password ,email, bio, profile_picture}, { new: true });
 
     if (!updatedUser) {
       return messageHandler(message.UPDATE_ERROR, "User", null, res);
