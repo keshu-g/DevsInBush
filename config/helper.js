@@ -7,11 +7,14 @@ const validationResultHandler = (callback) => {
   return (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      const simplifiedErrors = errors.array().map(e => ({
-        msg: e.msg,
-        path: e.path
-      }));
-      return messageHandler(message.CUSTOM, "Invalid Values", simplifiedErrors, res)
+
+      // const simplifiedErrors = errors.array().map(e => ({
+      //   msg: e.msg,
+      //   path: euserdata);th
+      // }));
+
+      let msg = errors.errors[0].msg
+      return messageHandler(message.CUSTOM, msg, null, res)
     }
     callback(req, res, next);
   };
