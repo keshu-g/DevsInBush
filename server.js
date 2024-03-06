@@ -11,8 +11,8 @@ const tagRoutes = require("./routes/tagRoutes");
 
 const app = express();
 app.use(express.json());
-express.urlencoded({ extended: true });
 
+express.urlencoded({ extended: true });
 
 // Use the routes
 app.use("/user", userRoutes);
