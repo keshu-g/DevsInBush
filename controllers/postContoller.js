@@ -3,6 +3,7 @@ const { message } = require("../config/message");
 const keys = require("../config/keys");
 const { PostModel } = require("../models/Posts");
 const { UserModel } = require("../models/Users");
+const mongoose = require("mongoose");
 
 // getAll is not needed
 const getAll = async (req, res) => {
@@ -14,38 +15,88 @@ const getAll = async (req, res) => {
   }
 };
 
-const getById = async (req, res) => {
+// return post, comments
+const getPostById = async (req, res) => {
   try {
-    const posts = await PostModel.findById(req.params.id).populate([
-      {
-        path: "user_id",
-        select: "_id username profile_picture",
-      },
-      {
-        path: "tags",
-        select: "_id name",
-      },
-      // {
-      //   path: 'likes',
-      //   select: '_id username profile_picture'
-      // }
-    ]);
+    let post_id = req.params.id;
 
     let pipline = [
-      
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(post_id),
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "post_id",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                user_id: 1,
+                post_id: 1,
+                content: 1,
+                createdAt: 1,
+                updatedAt: 1,
+              },
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "user_id",
+                foreignField: "_id",
+                pipeline: [{ $project: { _id: 1, username: 1, profile_picture: 1 } }],
+                as: "user",
+              },
+            },
+          ],
+          as: "comments",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          pipeline: [{ $project: { _id: 1, username: 1, profile_picture: 1 } }],
+          as: "user",
+        },
+      },
+      {
+        $lookup: {
+          from: "tags",
+          localField: "tags",
+          foreignField: "_id",
+          pipeline: [{ $project: { _id: 1, name: 1 } }],
+          as: "tags",
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          user_id: 0,
+          "user.posts": 0,
+          "user.password": 0,
+        },
+      },
     ];
 
-    if (!posts) {
+    const posts = await PostModel.aggregate(pipline);
+
+    if (posts.length == 0) {
       return messageHandler(message.NOT_FOUND, "Posts", null, res);
     }
 
-    return messageHandler(message.FETCH_SUCCESS, "Posts", posts, res);
+    return messageHandler(message.FETCH_SUCCESS, "Post", posts, res);
   } catch (error) {
+    console.log(error);
     return messageHandler(message.SERVER_ERROR, null, error.message, res);
   }
 };
 
-const create = async (req, res) => {
+const createPost = async (req, res) => {
   try {
     const { title, content, tags } = req.body;
     const user_id = req.user.id;
@@ -57,11 +108,7 @@ const create = async (req, res) => {
       tags,
     });
 
-    await UserModel.findByIdAndUpdate(
-      user_id,
-      { $push: { posts: newPost._id } },
-      { new: true }
-    );
+    await UserModel.findByIdAndUpdate(user_id, { $push: { posts: newPost._id } }, { new: true });
 
     return messageHandler(message.CREATE_SUCCESS, "Post", newPost, res);
   } catch (error) {
@@ -69,17 +116,13 @@ const create = async (req, res) => {
   }
 };
 
-const update = async (req, res) => {
+const updatePost = async (req, res) => {
   try {
     const postId = req.params.id;
 
     const { title, body, tags } = req.body;
 
-    const updatedPost = await PostModel.findByIdAndUpdate(
-      postId,
-      { title, body, tags },
-      { new: true }
-    );
+    const updatedPost = await PostModel.findByIdAndUpdate(postId, { title, body, tags }, { new: true });
 
     if (!updatedPost) {
       return messageHandler(message.UPDATE_ERROR, "Post", null, res);
@@ -90,20 +133,21 @@ const update = async (req, res) => {
   }
 };
 
-const deletee = async (req, res) => {
+const deletePost = async (req, res) => {
   try {
-    const postId = req.params.id;
+    const post_id = req.params.id;
+    const user_id = req.user.id;
 
-    const post_data = await PostModel.find({
-      _id: postId,
-      user_id: req.user.id,
-    });
+    // const post_data = await PostModel.find({
+    //   _id: postId,
+    //   user_id: req.user.id,
+    // });
+
+    const post_data = await PostModel.findOneAndDelete({_id : post_id, user_id});
 
     if (!post_data) {
       return messageHandler(message.NOT_FOUND, "Post", null, res);
     }
-
-    await PostModel.deleteOne({ _id: postId });
 
     return messageHandler(message.DELETE_SUCCESS, "Post", null, res);
   } catch (error) {
@@ -111,16 +155,14 @@ const deletee = async (req, res) => {
   }
 };
 
+// need to do something about likes but later
+// not a optimized way
 const likePost = async (req, res) => {
   try {
     const postId = req.params.id;
     const userId = req.body.userId;
 
-    const updatedPost = await PostModel.findByIdAndUpdate(
-      postId,
-      { $addToSet: { likes: userId } },
-      { new: true }
-    );
+    const updatedPost = await PostModel.findByIdAndUpdate(postId, { $addToSet: { likes: userId } }, { new: true });
 
     if (!updatedPost) {
       return messageHandler(message.UPDATE_ERROR, "Post", null, res);
@@ -133,9 +175,9 @@ const likePost = async (req, res) => {
 
 module.exports = {
   getAll,
-  getById,
-  create,
-  update,
-  deletee,
+  getPostById,
+  createPost,
+  updatePost,
+  deletePost,
   likePost,
 };

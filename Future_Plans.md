@@ -1,11 +1,11 @@
-## Add This 
+## Notes
 ```
 Model/Votes - {
     _id,
     user_id,
     entity_id,
-    type(upvote, downvote),
-    entity_type(post, comment),
+    ENUM type(upvote, downvote),
+    ENUM entity_type(post, comment),
 }
 
 ```
@@ -14,10 +14,11 @@ Model/Votes - {
 <!-- ## First things to do -->
 
 
-## Future plans
+## Todo
 
 1. Add a additional API for changing the password(and remove from update user)
-
+2. Add a API to get all posts of a tag (optimize it)
+3. Plan for Votes
 
 ## What is done
 
@@ -30,6 +31,9 @@ User
 
 Posts
     - CRUD
+
+Comments
+    -Create Update Delete
 
 Tags 
     - Get All Tags
