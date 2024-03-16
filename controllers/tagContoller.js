@@ -14,7 +14,8 @@ const getAll = async (req, res) => {
     }
 }
 
-const getById = async (req, res) => {
+// API to get all posts of a tag
+const gePosttByTagId = async (req, res) => {
     try {
         let tags = await TagModel.findById(req.params.id);
 
@@ -37,9 +38,9 @@ const getById = async (req, res) => {
     }
 }
 
-const create = async (req, res) => {
+// only for admins 
+const createTags = async (req, res) => {
     try {
-        // only for devs 
         if (req.user.role == 1) {
 
             const tags = req.body.tags

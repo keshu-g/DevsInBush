@@ -1,9 +1,8 @@
 const cloudinary = require("../config/media");
 const { messageHandler } = require('../config/helper');
 const { message } = require('../config/message');
-const fs = require('fs');
 
-const uploadController = async (req, res) => {
+const uploader = async (req, res) => {
     if (!req.file) {
         return messageHandler(message.REQUIRED, "File", null, res);
     }
@@ -22,5 +21,5 @@ const uploadController = async (req, res) => {
 }
 
 module.exports = {
-    upload: uploadController
+    uploader,
 };
