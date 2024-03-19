@@ -1,5 +1,5 @@
 const { body, param } = require("express-validator");
-const { UserModel } = require("../models/Users");
+const { userModel } = require("../models/Users");
 const cloudinary = require("../config/media");
 const fs = require("fs");
 
@@ -18,7 +18,7 @@ const createUserValidation = [
       // If the user parameter exists, this means we're updating a user
       if (req.user) {
         if (
-          await UserModel.findOne({
+          await userModel.findOne({
             username: value,
             _id: { $ne: req.user.id },
           })
@@ -28,7 +28,7 @@ const createUserValidation = [
       } else {
         // If the user parameter doesn't exist, this means we're creating a new user
         // In this case, the username must be unique
-        const existingUser = await UserModel.findOne({ username: value });
+        const existingUser = await userModel.findOne({ username: value });
 
         if (existingUser) {
           throw new Error("Username is already in use");
@@ -46,13 +46,13 @@ const createUserValidation = [
     .custom(async (value, { req }) => {
       // If the user parameter exists, this means we're updating a user
       if (req.user) {
-        if (await UserModel.findOne({ email: value, _id: { $ne: req.user.id } })) {
+        if (await userModel.findOne({ email: value, _id: { $ne: req.user.id } })) {
           throw new Error("Email is already in use");
         }
       } else {
         // If the id parameter doesn't exist, this means we're creating a new user
         // In this case, the email must be unique
-        const existingUser = await UserModel.findOne({ email: value });
+        const existingUser = await userModel.findOne({ email: value });
 
         if (existingUser) {
           throw new Error("Email is already in use");

@@ -1,11 +1,11 @@
 const { messageHandler } = require("../config/helper");
 const { message } = require("../config/message");
-const { CommentModel } = require("../models/Comments");
+const { commentModel } = require("../models/Comments");
 
 // API to get all comments for single post
 // const getByPostId = async (req, res) => {
 //   try {
-//     const comments = await CommentModel.find({ post_id: req.params.post_id });
+//     const comments = await commentModel.find({ post_id: req.params.post_id });
 
 //     return messageHandler(message.FETCH_SUCCESS, "Comments", posts, res);
 //   } catch (error) {
@@ -18,7 +18,7 @@ const createComment = async (req, res) => {
     const user_id = req.user.id;
     const { post_id, content } = req.body;
 
-    const newComment = await CommentModel.create({
+    const newComment = await commentModel.create({
       user_id,
       post_id,
       content,
@@ -35,7 +35,7 @@ const updateComment = async (req, res) => {
     const comment_id = req.params.id;
     const { content } = req.body;
 
-    let commentData = await CommentModel.findByIdAndUpdate(comment_id, { content });
+    let commentData = await commentModel.findByIdAndUpdate(comment_id, { content });
 
     if (!commentData) {
       return messageHandler(message.UPDATE_ERROR, "Comment", null, res);
@@ -51,7 +51,7 @@ const deleteComment = async (req, res) => {
   try {
     const comment_id = req.params.id;
 
-    const comment_data = await CommentModel.findOneAndDelete({
+    const comment_data = await commentModel.findOneAndDelete({
       _id: comment_id,
       user_id: req.user.id,
     });

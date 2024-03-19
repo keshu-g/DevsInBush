@@ -40,3 +40,7 @@ Tags
     - Get All Posts of a Tag
     - Insert bulk tags in database
 
+Votes
+    - Added API to Add Update Delete Votes(all in one API)
+    - Added API to View Vote Count of any entityId
+

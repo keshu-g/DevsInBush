@@ -1,14 +1,14 @@
-const { messageHandler } = require("../config/helper");
-const { message } = require("../config/message");
-const keys = require("../config/keys");
-const { PostModel } = require("../models/Posts");
-const { UserModel } = require("../models/Users");
 const mongoose = require("mongoose");
+
+const { message } = require("../config/message");
+const { postModel } = require("../models/Posts");
+const { userModel } = require("../models/Users");
+const { messageHandler, voteCounterPipeline } = require("../config/helper");
 
 // getAll is not needed
 const getAll = async (req, res) => {
   try {
-    const posts = await PostModel.find({});
+    const posts = await postModel.find({});
     return messageHandler(message.FETCH_SUCCESS, "Posts", posts, res);
   } catch (error) {
     return messageHandler(message.SERVER_ERROR, null, error.message, res);
@@ -32,6 +32,17 @@ const getPostById = async (req, res) => {
           localField: "_id",
           foreignField: "post_id",
           pipeline: [
+            {
+              $lookup: {
+                from: "votes",
+                let: { comment_id: "$_id" },
+                pipeline: [
+                  { $match: { $expr: { $eq: ["$entity_id", "$$comment_id"] } } },
+                  ...voteCounterPipeline("$$comment_id"),
+                ],
+                as: "voteCount",
+              },
+            },
             {
               $project: {
                 _id: 1,
@@ -83,7 +94,7 @@ const getPostById = async (req, res) => {
       },
     ];
 
-    const posts = await PostModel.aggregate(pipline);
+    const posts = await postModel.aggregate(pipline);
 
     if (posts.length == 0) {
       return messageHandler(message.NOT_FOUND, "Posts", null, res);
@@ -101,14 +112,14 @@ const createPost = async (req, res) => {
     const { title, content, tags } = req.body;
     const user_id = req.user.id;
 
-    const newPost = await PostModel.create({
+    const newPost = await postModel.create({
       user_id,
       title,
       content,
       tags,
     });
 
-    await UserModel.findByIdAndUpdate(user_id, { $push: { posts: newPost._id } }, { new: true });
+    await userModel.findByIdAndUpdate(user_id, { $push: { posts: newPost._id } }, { new: true });
 
     return messageHandler(message.CREATE_SUCCESS, "Post", newPost, res);
   } catch (error) {
@@ -122,7 +133,7 @@ const updatePost = async (req, res) => {
 
     const { title, body, tags } = req.body;
 
-    const updatedPost = await PostModel.findByIdAndUpdate(postId, { title, body, tags }, { new: true });
+    const updatedPost = await postModel.findByIdAndUpdate(postId, { title, body, tags }, { new: true });
 
     if (!updatedPost) {
       return messageHandler(message.UPDATE_ERROR, "Post", null, res);
@@ -138,12 +149,12 @@ const deletePost = async (req, res) => {
     const post_id = req.params.id;
     const user_id = req.user.id;
 
-    // const post_data = await PostModel.find({
+    // const post_data = await postModel.find({
     //   _id: postId,
     //   user_id: req.user.id,
     // });
 
-    const post_data = await PostModel.findOneAndDelete({_id : post_id, user_id});
+    const post_data = await postModel.findOneAndDelete({_id : post_id, user_id});
 
     if (!post_data) {
       return messageHandler(message.NOT_FOUND, "Post", null, res);
@@ -157,21 +168,21 @@ const deletePost = async (req, res) => {
 
 // need to do something about likes but later
 // not a optimized way
-const likePost = async (req, res) => {
-  try {
-    const postId = req.params.id;
-    const userId = req.body.userId;
+// const likePost = async (req, res) => {
+//   try {
+//     const postId = req.params.id;
+//     const userId = req.body.userId;
 
-    const updatedPost = await PostModel.findByIdAndUpdate(postId, { $addToSet: { likes: userId } }, { new: true });
+//     const updatedPost = await postModel.findByIdAndUpdate(postId, { $addToSet: { likes: userId } }, { new: true });
 
-    if (!updatedPost) {
-      return messageHandler(message.UPDATE_ERROR, "Post", null, res);
-    }
-    return messageHandler(message.UPDATE_SUCCESS, "Post", updatedPost, res);
-  } catch (error) {
-    return messageHandler(message.SERVER_ERROR, null, error.message, res);
-  }
-};
+//     if (!updatedPost) {
+//       return messageHandler(message.UPDATE_ERROR, "Post", null, res);
+//     }
+//     return messageHandler(message.UPDATE_SUCCESS, "Post", updatedPost, res);
+//   } catch (error) {
+//     return messageHandler(message.SERVER_ERROR, null, error.message, res);
+//   }
+// };
 
 module.exports = {
   getAll,
@@ -179,5 +190,4 @@ module.exports = {
   createPost,
   updatePost,
   deletePost,
-  likePost,
 };

@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 const keys = require("../config/keys");
-const { UserModel } = require("../models/Users");
+const { userModel } = require("../models/Users");
 const { message } = require("../config/message");
 const { messageHandler } = require("../config/helper");
 
@@ -19,7 +19,7 @@ const authMiddleware = async (req, res, next) => {
       const verified = jwt.verify(header, keys.JWT_SECRET);
 
       // Find the user in database
-      let userData = await UserModel.findById(verified.id);
+      let userData = await userModel.findById(verified.id);
       if (!userData) {
         return messageHandler(message.INVALID_TOKEN, null, null, res);
       }

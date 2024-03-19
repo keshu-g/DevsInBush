@@ -8,8 +8,8 @@ const { validationResultHandler } = require("../config/helper");
 // const { createUserValidation, loginValidator } = require("../validation/userValidator");
 
 router.get("", authMiddleware, tagController.getAll);
-router.get("/:id", IdValidation, validationResultHandler(tagController.getById));
+router.get("/:id", IdValidation, validationResultHandler(tagController.gePostByTagId));
 
-router.post("", authMiddleware, tagController.create);
+router.post("", authMiddleware, tagController.createTags);
 
 module.exports = router;
