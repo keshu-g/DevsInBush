@@ -1,4 +1,4 @@
-const { messageHandler } = require("../config/helper");
+const { messageHandler } = require("../helper/commonHelper");
 const { message } = require("../config/message");
 const { commentModel } = require("../models/Comments");
 

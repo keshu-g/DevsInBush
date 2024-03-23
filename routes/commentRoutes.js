@@ -3,7 +3,7 @@ const router = Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
 const commentController = require("../controllers/commentController");
-const { validationResultHandler } = require("../config/helper");
+const { validationResultHandler } = require("../helper/commonHelper");
 const { createCommentValidation, getCommentValidation } = require("../validation/commentValidator");
 const { IdValidation } = require("../validation/anyValidator");
 

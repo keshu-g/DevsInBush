@@ -3,7 +3,7 @@ const router = Router();
 
 const voteController = require("../controllers/voteController");
 const authMiddleware = require("../middleware/authMiddleware");
-const { validationResultHandler } = require("../config/helper");
+const { validationResultHandler } = require("../helper/commonHelper");
 const { voteValidator } = require("../validation/voteValidator");
 const { IdValidation } = require("../validation/anyValidator");
 

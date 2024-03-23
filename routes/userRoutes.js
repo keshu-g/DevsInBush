@@ -4,7 +4,7 @@ const router = Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const userController = require("../controllers/userContoller");
 const { IdValidation } = require("../validation/anyValidator");
-const { validationResultHandler } = require("../config/helper");
+const { validationResultHandler } = require("../helper/commonHelper");
 const { createUserValidation, loginValidator } = require("../validation/userValidator");
 
 router.get("", userController.getAll);

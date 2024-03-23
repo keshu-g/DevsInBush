@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const keys = require("../config/keys");
 const { message } = require("../config/message");
 const { userModel } = require("../models/Users");
-const { messageHandler } = require("../config/helper");
+const { messageHandler } = require("../helper/commonHelper");
 
 // This API is not needed
 const getAll = async (req, res) => {

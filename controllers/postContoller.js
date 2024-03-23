@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const { message } = require("../config/message");
 const { postModel } = require("../models/Posts");
 const { userModel } = require("../models/Users");
-const { messageHandler, voteCounterPipeline } = require("../config/helper");
+const { messageHandler } = require("../helper/commonHelper");
+const { voteCounterPipeline, userLookupPipeline } = require("../helper/pipelineHelper");
 
 // getAll is not needed
 const getAll = async (req, res) => {
@@ -35,12 +36,18 @@ const getPostById = async (req, res) => {
             {
               $lookup: {
                 from: "votes",
-                let: { comment_id: "$_id" },
+                localField: "_id",
+                foreignField: "entity_id",
                 pipeline: [
-                  { $match: { $expr: { $eq: ["$entity_id", "$$comment_id"] } } },
-                  ...voteCounterPipeline("$$comment_id"),
+                  ...voteCounterPipeline,
                 ],
                 as: "voteCount",
+              },
+            },
+            {
+              $unwind: {
+                path: "$voteCount",
+                preserveNullAndEmptyArrays: true,
               },
             },
             {
@@ -51,30 +58,15 @@ const getPostById = async (req, res) => {
                 content: 1,
                 createdAt: 1,
                 updatedAt: 1,
+                voteCount: { $ifNull: ["$voteCount.count", 0] },
               },
             },
-            {
-              $lookup: {
-                from: "users",
-                localField: "user_id",
-                foreignField: "_id",
-                pipeline: [{ $project: { _id: 1, username: 1, profile_picture: 1 } }],
-                as: "user",
-              },
-            },
+            ...userLookupPipeline,
           ],
           as: "comments",
         },
       },
-      {
-        $lookup: {
-          from: "users",
-          localField: "user_id",
-          foreignField: "_id",
-          pipeline: [{ $project: { _id: 1, username: 1, profile_picture: 1 } }],
-          as: "user",
-        },
-      },
+      ...userLookupPipeline,
       {
         $lookup: {
           from: "tags",
@@ -85,11 +77,34 @@ const getPostById = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "votes",
+          localField: "_id",
+          foreignField: "entity_id",
+          pipeline: [
+            ...voteCounterPipeline,
+          ],
+          as: "postVoteCount",
+        },
+      },
+      {
+        $unwind: {
+          path: "$postVoteCount",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          voteCount: { $ifNull: ["$postVoteCount.count", 0] },
+        },
+      },
+      {
         $project: {
           __v: 0,
           user_id: 0,
           "user.posts": 0,
           "user.password": 0,
+          postVoteCount: 0,
         },
       },
     ];
@@ -149,12 +164,7 @@ const deletePost = async (req, res) => {
     const post_id = req.params.id;
     const user_id = req.user.id;
 
-    // const post_data = await postModel.find({
-    //   _id: postId,
-    //   user_id: req.user.id,
-    // });
-
-    const post_data = await postModel.findOneAndDelete({_id : post_id, user_id});
+    const post_data = await postModel.findOneAndDelete({ _id: post_id, user_id });
 
     if (!post_data) {
       return messageHandler(message.NOT_FOUND, "Post", null, res);
@@ -165,24 +175,6 @@ const deletePost = async (req, res) => {
     return messageHandler(message.SERVER_ERROR, null, error.message, res);
   }
 };
-
-// need to do something about likes but later
-// not a optimized way
-// const likePost = async (req, res) => {
-//   try {
-//     const postId = req.params.id;
-//     const userId = req.body.userId;
-
-//     const updatedPost = await postModel.findByIdAndUpdate(postId, { $addToSet: { likes: userId } }, { new: true });
-
-//     if (!updatedPost) {
-//       return messageHandler(message.UPDATE_ERROR, "Post", null, res);
-//     }
-//     return messageHandler(message.UPDATE_SUCCESS, "Post", updatedPost, res);
-//   } catch (error) {
-//     return messageHandler(message.SERVER_ERROR, null, error.message, res);
-//   }
-// };
 
 module.exports = {
   getAll,

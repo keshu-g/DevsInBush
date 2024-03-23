@@ -2,7 +2,7 @@ const { message } = require("../config/message");
 const { postModel } = require("../models/Posts");
 const { voteModel } = require("../models/Votes");
 const { commentModel } = require("../models/Comments");
-const { messageHandler, voteCounter } = require("../config/helper");
+const { messageHandler, voteCounter } = require("../helper/commonHelper");
 
 const voteManager = async (req, res) => {
   try {
