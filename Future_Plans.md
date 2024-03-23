@@ -24,7 +24,7 @@ Model/Votes - {
 
 Authentication Sytem
     - Login system
-
+dsds
 User
     - CRUD
     - Profile (gives posts too)
