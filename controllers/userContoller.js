@@ -3,13 +3,13 @@ const jwt = require("jsonwebtoken");
 
 const keys = require("../config/keys");
 const { message } = require("../config/message");
-const { UserModel } = require("../models/Users");
-const { messageHandler } = require("../config/helper");
+const { userModel } = require("../models/Users");
+const { messageHandler } = require("../helper/commonHelper");
 
 // This API is not needed
 const getAll = async (req, res) => {
   try {
-    const users = await UserModel.find({});
+    const users = await userModel.find({});
     return messageHandler(message.FETCH_SUCCESS, "Users", users, res);
   } catch (error) {
     return messageHandler(message.SERVER_ERROR, null, error.message, res);
@@ -19,7 +19,7 @@ const getAll = async (req, res) => {
 // getById is for getting other users profile
 const getById = async (req, res) => {
   try {
-    const user = await UserModel.findById(req.params.id, {
+    const user = await userModel.findById(req.params.id, {
       password: 0,
       role: 0,
       __v: 0,
@@ -48,7 +48,7 @@ const createUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, keys.BCRYPT_SALT_ROUNDS);
 
-    const newUser = await UserModel.create({
+    const newUser = await userModel.create({
       username,
       email,
       password: hashedPassword,
@@ -68,7 +68,7 @@ const updateUser = async (req, res) => {
 
     const { username, email, bio, profile_picture } = req.body;
 
-    const updatedUser = await UserModel.findByIdAndUpdate(
+    const updatedUser = await userModel.findByIdAndUpdate(
       userId,
       { username, email, bio, profile_picture },
       { new: true, select: "-password" }
@@ -88,7 +88,7 @@ const deleteUser = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const deletedUser = await UserModel.findByIdAndDelete(userId);
+    const deletedUser = await userModel.findByIdAndDelete(userId);
 
     if (!deletedUser) {
       return messageHandler(message.NOT_FOUND, "User", null, res);
@@ -104,7 +104,7 @@ const getUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const profile = await UserModel.findById(userId, { password: 0, role: 0 })
+    const profile = await userModel.findById(userId, { password: 0, role: 0 })
       .populate([
         {
           path: "posts",
@@ -128,7 +128,7 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const userData = await UserModel.findOne({ email: email });
+    const userData = await userModel.findOne({ email: email });
 
     if (!userData) {
       return messageHandler(message.INVALID_LOGIN, null, null, res);

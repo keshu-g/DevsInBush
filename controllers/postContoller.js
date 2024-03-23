@@ -1,14 +1,15 @@
-const { messageHandler } = require("../config/helper");
-const { message } = require("../config/message");
-const keys = require("../config/keys");
-const { PostModel } = require("../models/Posts");
-const { UserModel } = require("../models/Users");
 const mongoose = require("mongoose");
+
+const { message } = require("../config/message");
+const { postModel } = require("../models/Posts");
+const { userModel } = require("../models/Users");
+const { messageHandler } = require("../helper/commonHelper");
+const { voteCounterPipeline, userLookupPipeline } = require("../helper/pipelineHelper");
 
 // getAll is not needed
 const getAll = async (req, res) => {
   try {
-    const posts = await PostModel.find({});
+    const posts = await postModel.find({});
     return messageHandler(message.FETCH_SUCCESS, "Posts", posts, res);
   } catch (error) {
     return messageHandler(message.SERVER_ERROR, null, error.message, res);
@@ -33,6 +34,23 @@ const getPostById = async (req, res) => {
           foreignField: "post_id",
           pipeline: [
             {
+              $lookup: {
+                from: "votes",
+                localField: "_id",
+                foreignField: "entity_id",
+                pipeline: [
+                  ...voteCounterPipeline,
+                ],
+                as: "voteCount",
+              },
+            },
+            {
+              $unwind: {
+                path: "$voteCount",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
               $project: {
                 _id: 1,
                 user_id: 1,
@@ -40,30 +58,15 @@ const getPostById = async (req, res) => {
                 content: 1,
                 createdAt: 1,
                 updatedAt: 1,
+                voteCount: { $ifNull: ["$voteCount.count", 0] },
               },
             },
-            {
-              $lookup: {
-                from: "users",
-                localField: "user_id",
-                foreignField: "_id",
-                pipeline: [{ $project: { _id: 1, username: 1, profile_picture: 1 } }],
-                as: "user",
-              },
-            },
+            ...userLookupPipeline,
           ],
           as: "comments",
         },
       },
-      {
-        $lookup: {
-          from: "users",
-          localField: "user_id",
-          foreignField: "_id",
-          pipeline: [{ $project: { _id: 1, username: 1, profile_picture: 1 } }],
-          as: "user",
-        },
-      },
+      ...userLookupPipeline,
       {
         $lookup: {
           from: "tags",
@@ -74,16 +77,39 @@ const getPostById = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "votes",
+          localField: "_id",
+          foreignField: "entity_id",
+          pipeline: [
+            ...voteCounterPipeline,
+          ],
+          as: "postVoteCount",
+        },
+      },
+      {
+        $unwind: {
+          path: "$postVoteCount",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          voteCount: { $ifNull: ["$postVoteCount.count", 0] },
+        },
+      },
+      {
         $project: {
           __v: 0,
           user_id: 0,
           "user.posts": 0,
           "user.password": 0,
+          postVoteCount: 0,
         },
       },
     ];
 
-    const posts = await PostModel.aggregate(pipline);
+    const posts = await postModel.aggregate(pipline);
 
     if (posts.length == 0) {
       return messageHandler(message.NOT_FOUND, "Posts", null, res);
@@ -101,14 +127,14 @@ const createPost = async (req, res) => {
     const { title, content, tags } = req.body;
     const user_id = req.user.id;
 
-    const newPost = await PostModel.create({
+    const newPost = await postModel.create({
       user_id,
       title,
       content,
       tags,
     });
 
-    await UserModel.findByIdAndUpdate(user_id, { $push: { posts: newPost._id } }, { new: true });
+    await userModel.findByIdAndUpdate(user_id, { $push: { posts: newPost._id } }, { new: true });
 
     return messageHandler(message.CREATE_SUCCESS, "Post", newPost, res);
   } catch (error) {
@@ -122,7 +148,7 @@ const updatePost = async (req, res) => {
 
     const { title, body, tags } = req.body;
 
-    const updatedPost = await PostModel.findByIdAndUpdate(postId, { title, body, tags }, { new: true });
+    const updatedPost = await postModel.findByIdAndUpdate(postId, { title, body, tags }, { new: true });
 
     if (!updatedPost) {
       return messageHandler(message.UPDATE_ERROR, "Post", null, res);
@@ -138,12 +164,7 @@ const deletePost = async (req, res) => {
     const post_id = req.params.id;
     const user_id = req.user.id;
 
-    // const post_data = await PostModel.find({
-    //   _id: postId,
-    //   user_id: req.user.id,
-    // });
-
-    const post_data = await PostModel.findOneAndDelete({_id : post_id, user_id});
+    const post_data = await postModel.findOneAndDelete({ _id: post_id, user_id });
 
     if (!post_data) {
       return messageHandler(message.NOT_FOUND, "Post", null, res);
@@ -155,29 +176,10 @@ const deletePost = async (req, res) => {
   }
 };
 
-// need to do something about likes but later
-// not a optimized way
-const likePost = async (req, res) => {
-  try {
-    const postId = req.params.id;
-    const userId = req.body.userId;
-
-    const updatedPost = await PostModel.findByIdAndUpdate(postId, { $addToSet: { likes: userId } }, { new: true });
-
-    if (!updatedPost) {
-      return messageHandler(message.UPDATE_ERROR, "Post", null, res);
-    }
-    return messageHandler(message.UPDATE_SUCCESS, "Post", updatedPost, res);
-  } catch (error) {
-    return messageHandler(message.SERVER_ERROR, null, error.message, res);
-  }
-};
-
 module.exports = {
   getAll,
   getPostById,
   createPost,
   updatePost,
   deletePost,
-  likePost,
 };

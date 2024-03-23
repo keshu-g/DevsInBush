@@ -1,7 +1,10 @@
-// helper.js
-const { validationResult } = require("express-validator");
-const { message } = require("./message");
+const mongoose = require("mongoose");
+
+const { message } = require("../config/message");
 const cloudinary = require("../config/media");
+const { voteModel } = require("../models/Votes");
+const { validationResult } = require("express-validator");
+const { voteCounterPipeline } = require("../helper/pipelineHelper");
 
 const validationResultHandler = (callback) => {
   return (req, res, next) => {
@@ -9,7 +12,7 @@ const validationResultHandler = (callback) => {
     if (!errors.isEmpty()) {
       // const simplifiedErrors = errors.array().map(e => ({
       //   msg: e.msg,
-      //   path: euserdata);th
+      //   path: euserdata);
       // }));
 
       let msg = errors.errors[0].msg;
@@ -38,8 +41,22 @@ const handleUpload = async (file) => {
   return res;
 };
 
+const voteCounter = async (entity_id) => {
+  let pipeline = [{ $match: { entity_id: new mongoose.Types.ObjectId(entity_id) } }, ...voteCounterPipeline];
+
+  let voteCounts = await voteModel.aggregate(pipeline);
+
+  if (voteCounts.length === 0) {
+    return { count: 0 };
+  }
+  let { count } = voteCounts[0];
+
+  return { count };
+};
+
 module.exports = {
   validationResultHandler,
   messageHandler,
   handleUpload,
+  voteCounter,
 };

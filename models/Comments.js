@@ -1,7 +1,7 @@
 // models/Comment.js
 const mongoose = require("mongoose");
 
-const CommentSchema = new mongoose.Schema(
+const commentSchema = new mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -36,6 +36,6 @@ const CommentSchema = new mongoose.Schema(
   }
 );
 
-const CommentModel = mongoose.model("Comments", CommentSchema);
+const commentModel = mongoose.model("Comments", commentSchema);
 
-module.exports = { CommentModel };
+module.exports = { commentModel };

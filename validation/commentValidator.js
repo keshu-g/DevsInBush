@@ -1,8 +1,8 @@
 const { body, param } = require("express-validator");
-const { PostModel } = require("../models/Posts");
-const { UserModel } = require("../models/Users");
+const { postModel } = require("../models/Posts");
+const { userModel } = require("../models/Users");
 const mongoose = require("mongoose");
-const { CommentModel } = require("../models/Comments");
+const { commentModel } = require("../models/Comments");
 
 const createCommentValidation = [
   param("id")
@@ -11,7 +11,7 @@ const createCommentValidation = [
     .withMessage("Invalid Id")
     .bail({ level: "request" })
     .custom(async (value, { req }) => {
-      let commentData = await CommentModel.findOne({
+      let commentData = await commentModel.findOne({
         _id: value,
         user_id: req.user.id,
       });
@@ -29,7 +29,7 @@ const createCommentValidation = [
       if (req.params.id) {
         throw new Error("Cannot change post_id");
       }
-      let data = await PostModel.findById(value);
+      let data = await postModel.findById(value);
       if (!data) {
         throw new Error("Post not found");
       }
@@ -53,7 +53,7 @@ const getCommentValidation = [
     .withMessage("Invalid Post Id")
     .bail()
     .custom(async (value, { req }) => {
-      let data = await UserModel.findById(value);
+      let data = await userModel.findById(value);
       if (!data) {
         throw new Error("Post not found");
       }

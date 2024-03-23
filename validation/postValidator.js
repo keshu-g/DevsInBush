@@ -1,7 +1,7 @@
 const { body, param } = require("express-validator");
-const { PostModel } = require("../models/Posts");
-const { UserModel } = require("../models/Users");
-const { TagModel } = require("../models/Tags");
+const { postModel } = require("../models/Posts");
+const { userModel } = require("../models/Users");
+const { tagModel } = require("../models/Tags");
 const mongoose = require("mongoose");
 
 const createPostValidation = [
@@ -11,7 +11,7 @@ const createPostValidation = [
     .withMessage("Invalid Post Id")
     .bail({ level: "request" })
     .custom(async (value, { req }) => {
-      let data = await PostModel.find({ _id: value, user_id: req.user.id, status: 1 });
+      let data = await postModel.find({ _id: value, user_id: req.user.id, status: 1 });
       if (data.length == 0) {
         throw new Error("Post not found");
       }
@@ -40,7 +40,7 @@ const createPostValidation = [
       if (!value.every((item) => mongoose.Types.ObjectId.isValid(item))) {
         throw new Error("Invalid Tag Id");
       }
-      const existingTags = await TagModel.find({ _id: { $in: value } });
+      const existingTags = await tagModel.find({ _id: { $in: value } });
       if (existingTags.length != value.length) {
         throw new Error("Tag not found");
       }
