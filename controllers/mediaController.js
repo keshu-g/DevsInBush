@@ -1,6 +1,7 @@
 const cloudinary = require("../config/media");
 const { messageHandler } = require("../helper/commonHelper");
 const { message } = require("../config/message");
+const fs = require("fs");
 
 const uploader = async (req, res) => {
   if (!req.file) {
