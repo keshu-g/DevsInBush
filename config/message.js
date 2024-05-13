@@ -7,7 +7,7 @@ const message = {
   UPDATE_ERROR: ["Item update error", 400, false],
   DUPLICATE_ERROR: ["Item is already in use", 409, false],
   INVALID_STATE: ["Item is not Valid", 422, false],
-  REQUIRED: ["Item is required", 400, false],
+  REQUIRED: ["Item is required.", 400, false],
 
   NOT_FOUND: ["Item not found", 404, false],
   SERVER_ERROR: ["Internal server error", 500, false],
