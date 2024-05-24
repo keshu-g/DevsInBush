@@ -1,5 +1,5 @@
 const message = {
-  FETCH_SUCCESS: ["Item fetched successfully", 200, true],
+  FETCH_SUCCESS: ["Item fetched successfully.", 200, true],
   CREATE_SUCCESS: ["Item created successfully", 201, true],
   CREATE_ERROR: ["Item creation error", 400, false],
   UPDATE_SUCCESS: ["Item updated successfully", 200, true],
